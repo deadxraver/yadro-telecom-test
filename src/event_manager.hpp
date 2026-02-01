@@ -12,6 +12,11 @@ struct Place {
   bool is_taken;
   std::string client_name;
   Place();
+  Time taken_since;
+  Time total_taken;
+  int total_earned;
+  void free(Time time, int cost);
+  bool take(std::string client, Time time);
 };
 
 class EventManager {
@@ -24,6 +29,8 @@ private:
   Time close_time_;
   int cost_;
   bool remove_from_queue(std::string client);
+  bool remove_from_in(std::string client);
+  bool is_in_club(std::string client) const;
 public:
   EventManager(
     int tables_count,

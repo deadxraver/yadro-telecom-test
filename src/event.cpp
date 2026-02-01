@@ -21,6 +21,26 @@ bool Time::is_less(const Time& time) const {
   return time.minutes_ > this->minutes_;
 }
 
+Time Time::add(const Time& time) const {
+  int hours = this->hours_ + time.hours_;
+  if (time.minutes_ + this->minutes_ >= 60)
+    ++hours;
+  int minutes = (this->minutes_ + time.minutes_) % 60;
+  return Time(hours, minutes);
+}
+
+Time Time::subtract(const Time& time) const {
+  int hours = this->hours_ - time.hours_;
+  if (time.minutes_ > this->minutes_)
+    --hours;
+  int minutes = (this->minutes_ - time.minutes_ + 60) % 60;
+  return Time(hours, minutes);
+}
+
+int Time::hours_roundup() const {
+  return this->hours_ + (this->minutes_ > 0);
+}
+
 std::string Time::to_string() const {
   std::string ret = this->hours_ >= 10 ? "" : "0";
   ret += std::to_string(this->hours_);

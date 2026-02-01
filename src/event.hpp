@@ -25,6 +25,9 @@ public:
   Time(std::string time_str);
   std::string to_string() const;
   bool is_less(const Time& time) const;
+  Time add(const Time& time) const;
+  Time subtract(const Time& time) const;
+  int hours_roundup() const;
 };
 
 class Event {

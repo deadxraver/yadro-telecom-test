@@ -2,9 +2,29 @@
 
 #include <algorithm>
 
-Place::Place() {
+Place::Place() :
+  is_taken(false),
+  client_name(""),
+  total_taken(0, 0),
+  taken_since(0, 0),
+  total_earned(0)
+{}
+
+void Place::free(Time time, int cost) {
+  Time used_for = time.subtract(this->taken_since);
+  this->total_earned += used_for.hours_roundup() * cost;
+  this->total_taken = used_for.add(this->total_taken);
   this->is_taken = false;
   this->client_name = "";
+}
+
+bool Place::take(std::string client, Time time) {
+  if (this->is_taken)
+    return false;
+  this->is_taken = true;
+  this->client_name = client;
+  this->taken_since = time;
+  return true;
 }
 
 EventManager::EventManager(
@@ -22,11 +42,10 @@ EventManager::EventManager(
 Event EventManager::check_queue(Time time) {
   if (this->clients_queue_.empty())
     goto no_event;
-  for (Place& p : this->tables_) {
-    if (!p.is_taken) {
-      p.is_taken = true;
-      p.client_name = this->clients_queue_[0];
+  for (size_t i = 0; i < this->tables_.size(); ++i) {
+    if (this->tables_[i].take(this->clients_queue_[0], time)) {
       this->clients_queue_.erase(this->clients_queue_.begin());
+      return Event(time, O_CLIENT_TOOK_PLACE, this->tables_[i].client_name, i + 1);
     }
   }
 no_event:
@@ -36,9 +55,31 @@ no_event:
 bool EventManager::remove_from_queue(std::string client) {
   for (size_t i = 0; i < this->clients_queue_.size(); ++i) {
     if (this->clients_queue_[i] == client) {
-      clients_queue_.erase(this->clients_queue_.begin() + i);
+      this->clients_queue_.erase(this->clients_queue_.begin() + i);
       return true;
     }
+  }
+  return false;
+}
+
+bool EventManager::remove_from_in(std::string client) {
+  for (size_t i = 0; i < this->clients_in_.size(); ++i) {
+    if (this->clients_in_[i] == client) {
+      this->clients_in_.erase(this->clients_in_.begin() + i);
+      return true;
+    }
+  }
+  return false;
+}
+
+bool EventManager::is_in_club(std::string client_name) const {
+  for (std::string c : this->clients_in_) {
+    if (c == client_name)
+      return true;
+  }
+  for (Place p : tables_) {
+    if (p.is_taken && p.client_name == client_name)
+      return true;
   }
   return false;
 }
@@ -47,25 +88,27 @@ Event EventManager::apply_event(const Event& event) {
   if (event.time().is_less(this->open_time_))
     return Event(event.time(), O_ERROR, "NotOpenYet");
   if (event.event_code() == I_CLIENT_CAME) {
+    if (this->is_in_club(event.client_name()))
+      return Event(event.time(), O_ERROR, "YouShallNotPass");
+    this->clients_in_.push_back(event.client_name());
     return Event(event.time(), NO_EVENT, "");
   }
   else if (event.event_code() == I_CLIENT_TOOK_PLACE) {
-    if (this->tables_[event.table_no() - 1].is_taken) // BUG: didn't work for client4
+    if (this->tables_[event.table_no() - 1].is_taken)
       return Event(event.time(), O_ERROR, "PlaceIsBusy");
     for (size_t i = 0; i < this->tables_count_; ++i) { // in case a client is switching place
       Place p = this->tables_[i];
       if (p.is_taken && p.client_name == event.client_name()) {
-        // TODO: count income
-        this->tables_[i].is_taken = false;
-        this->tables_[i].client_name = "";
+        this->tables_[i].free(event.time(), this->cost_);
         goto took_place_ok;
       }
     }
-    if (this->remove_from_queue(event.client_name()))
+    if (this->remove_from_in(event.client_name()))
       goto took_place_ok;
-    return Event(event.time(), NO_EVENT, "");
+    return Event(event.time(), O_ERROR, "ClientUnknown");
   took_place_ok:
-    return Event(event.time(), O_CLIENT_TOOK_PLACE, event.client_name(), event.table_no());
+    this->tables_[event.table_no() - 1].take(event.client_name(), event.time());
+    return Event(event.time(), NO_EVENT, "");
   }
   else if (event.event_code() == I_CLIENT_WAITS) {
     for (Place p : this->tables_) {
@@ -80,18 +123,17 @@ Event EventManager::apply_event(const Event& event) {
   else if (event.event_code() == I_CLIENT_LEFT) {
     for (size_t i = 0; i < this->tables_count_; ++i) {
       if (this->tables_[i].is_taken && this->tables_[i].client_name == event.client_name()) {
-        // TODO: count income
-        this->tables_[i].is_taken = false;
-        this->tables_[i].client_name = "";
+        this->tables_[i].free(event.time(), this->cost_);
         goto left_ok;
       }
     }
     if (this->remove_from_queue(event.client_name()))
       goto left_ok;
-    // NOTE: should be tested after clients_in_ is applied
+    if (this->remove_from_in(event.client_name()))
+      goto left_ok;
     return Event(event.time(), O_ERROR, "ClientUnknown");
   left_ok:
-    return Event(event.time(), O_CLIENT_LEFT, event.client_name());
+    return Event(event.time(), NO_EVENT, "");
   }
   else
     return Event(event.time(), O_ERROR, "UnknownEventId");
