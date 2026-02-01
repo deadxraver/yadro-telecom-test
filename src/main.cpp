@@ -34,6 +34,9 @@ int main(int argc, char* argv[]) {
     Event o_event = em.apply_event(*event);
     if (o_event.event_code() != NO_EVENT)
       std::cout << o_event.to_string() << std::endl;
+    o_event = em.check_queue(event->time());
+    if (o_event.event_code() != NO_EVENT)
+      std::cout << o_event.to_string() << std::endl;
     delete event;
   }
   for (std::string s : em.cleanup()) {

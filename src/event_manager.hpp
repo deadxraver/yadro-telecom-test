@@ -18,6 +18,7 @@ class EventManager {
 private:
   std::vector<Place> tables_;
   std::vector<std::string> clients_queue_;
+  std::vector<std::string> clients_in_;
   int tables_count_;
   Time open_time_;
   Time close_time_;
@@ -30,6 +31,7 @@ public:
     std::string close_time,
     int cost
   );
+  Event check_queue(Time time);
   std::vector<std::string> cleanup();
   Event apply_event(const Event& event);
 };

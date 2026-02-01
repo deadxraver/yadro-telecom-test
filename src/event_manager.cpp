@@ -19,6 +19,20 @@ EventManager::EventManager(
   tables_(tables_count)
 {}
 
+Event EventManager::check_queue(Time time) {
+  if (this->clients_queue_.empty())
+    goto no_event;
+  for (Place& p : this->tables_) {
+    if (!p.is_taken) {
+      p.is_taken = true;
+      p.client_name = this->clients_queue_[0];
+      this->clients_queue_.erase(this->clients_queue_.begin());
+    }
+  }
+no_event:
+  return Event(time, NO_EVENT, "");
+}
+
 bool EventManager::remove_from_queue(std::string client) {
   for (size_t i = 0; i < this->clients_queue_.size(); ++i) {
     if (this->clients_queue_[i] == client) {
@@ -36,7 +50,7 @@ Event EventManager::apply_event(const Event& event) {
     return Event(event.time(), NO_EVENT, "");
   }
   else if (event.event_code() == I_CLIENT_TOOK_PLACE) {
-    if (this->tables_[event.table_no()].is_taken)
+    if (this->tables_[event.table_no() - 1].is_taken) // BUG: didn't work for client4
       return Event(event.time(), O_ERROR, "PlaceIsBusy");
     for (size_t i = 0; i < this->tables_count_; ++i) { // in case a client is switching place
       Place p = this->tables_[i];
@@ -49,6 +63,7 @@ Event EventManager::apply_event(const Event& event) {
     }
     if (this->remove_from_queue(event.client_name()))
       goto took_place_ok;
+    return Event(event.time(), NO_EVENT, "");
   took_place_ok:
     return Event(event.time(), O_CLIENT_TOOK_PLACE, event.client_name(), event.table_no());
   }
@@ -73,8 +88,8 @@ Event EventManager::apply_event(const Event& event) {
     }
     if (this->remove_from_queue(event.client_name()))
       goto left_ok;
-    // BUG: returns NoSuchClient when shouldn't
-    //return Event(event.time(), O_ERROR, "NoSuchClient");
+    // NOTE: should be tested after clients_in_ is applied
+    return Event(event.time(), O_ERROR, "ClientUnknown");
   left_ok:
     return Event(event.time(), O_CLIENT_LEFT, event.client_name());
   }
