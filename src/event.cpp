@@ -76,6 +76,10 @@ const std::string& Event::client_name() const {
   return this->content_;
 }
 
+int Event::table_no() const {
+  return this->table_;
+}
+
 std::string Event::to_string() const {
   return this->time().to_string() + " "
   + std::to_string(this->event_code_) + " "

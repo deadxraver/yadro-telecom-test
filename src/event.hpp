@@ -60,6 +60,7 @@ public:
   Time time() const;
   const std::string& msg() const;
   const std::string& client_name() const;
+  int table_no() const;
   std::string to_string() const;
 };
 
