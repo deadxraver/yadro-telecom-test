@@ -44,6 +44,11 @@ int main(int argc, char* argv[]) {
     std::cout << e.to_string() << std::endl;
   }
   std::cout << close_time_str << std::endl;
+  std::vector<Place> tables = em.tables();
+  for (int i = 0; i < tables.size(); ++i) {
+    std::cout << (i + 1) << ' ' << tables[i].total_earned << ' '
+      << tables[i].total_taken.to_string() << std::endl;
+  }
   fin.close();
   return 0;
 }

@@ -41,6 +41,7 @@ public:
   Event check_queue(Time time);
   std::vector<std::string> cleanup();
   Event apply_event(const Event& event);
+  std::vector<Place> tables() const;
 };
 
 #endif // !_EVENT_MANAGER_HPP

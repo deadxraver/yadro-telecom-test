@@ -148,9 +148,13 @@ std::vector<std::string> EventManager::cleanup() {
     Place p = this->tables_[i];
     if (p.is_taken) {
       ret.push_back(p.client_name);
-      this->tables_[i].is_taken = false;
+      this->tables_[i].free(this->close_time_, this->cost_);
     }
   }
   std::sort(ret.begin(), ret.end());
   return ret;
+}
+
+std::vector<Place> EventManager::tables() const {
+  return this->tables_;
 }
