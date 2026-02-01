@@ -6,6 +6,7 @@
 #include <string>
 
 enum EventCode {
+  NO_EVENT = 0,
   I_CLIENT_CAME = 1,
   I_CLIENT_TOOK_PLACE,
   I_CLIENT_WAITS,
@@ -23,6 +24,7 @@ public:
   Time(uint8_t hours, uint8_t minutes);
   Time(std::string time_str);
   std::string to_string() const;
+  bool is_less(const Time& time) const;
 };
 
 class Event {
@@ -32,10 +34,30 @@ private:
   std::string content_;
   int table_;
 public:
-  Event(std::string time, int code, std::string client_name);
-  Event(std::string time, int code, std::string client_name, int table);
+  Event(
+    std::string time,
+    int code,
+    std::string client_name
+  );
+  Event(
+    std::string time,
+    int code,
+    std::string client_name,
+    int table
+  );
+  Event(
+    Time time,
+    int code,
+    std::string content
+  );
+  Event(
+    Time time,
+    int code,
+    std::string content,
+    int table_count
+  );
   EventCode event_code() const;
-  std::string time() const;
+  Time time() const;
   const std::string& msg() const;
   const std::string& client_name() const;
   std::string to_string() const;

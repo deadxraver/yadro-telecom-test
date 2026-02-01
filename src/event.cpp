@@ -13,6 +13,14 @@ Time::Time(uint8_t hours, uint8_t minutes) : hours_(hours), minutes_(minutes) {
 
 Time::Time(std::string time_str) : Time::Time(stoi(time_str.substr(0, 2)), stoi(time_str.substr(3, 5))) {}
 
+bool Time::is_less(const Time& time) const {
+  if (time.hours_ > this->hours_)
+    return true;
+  if (time.hours_ < this->hours_)
+    return false;
+  return time.minutes_ > this->minutes_;
+}
+
 std::string Time::to_string() const {
   std::string ret = this->hours_ >= 10 ? "" : "0";
   ret += std::to_string(this->hours_);
@@ -21,6 +29,21 @@ std::string Time::to_string() const {
     ret += "0";
   ret += std::to_string(this->minutes_);
   return ret;
+}
+
+Event::Event(
+  Time time,
+  int code,
+  std::string content
+) : time_(time), event_code_((EventCode)code), content_(content) {}
+
+Event::Event(
+  Time time,
+  int code,
+  std::string content,
+  int table_count
+) : Event(time, code, content) {
+  this->table_ = table_count;
 }
 
 Event::Event(
@@ -41,8 +64,8 @@ EventCode Event::event_code() const {
   return this->event_code_;
 }
 
-std::string Event::time() const {
-  return this->time_.to_string();
+Time Event::time() const {
+  return this->time_;
 }
 
 const std::string& Event::msg() const {
@@ -54,7 +77,7 @@ const std::string& Event::client_name() const {
 }
 
 std::string Event::to_string() const {
-  return this->time() + " "
+  return this->time().to_string() + " "
   + std::to_string(this->event_code_) + " "
   + this->content_
   + (this->event_code_ == I_CLIENT_TOOK_PLACE || this->event_code_ == O_CLIENT_TOOK_PLACE ? 
