@@ -15,7 +15,8 @@ build: $(SRC)
 	$(CC) $(SRC)/*.cpp -o $(TARGET)/$(TARGET_NAME)
 
 test: build
-	# TODO: 
+	$(TARGET)/$(TARGET_NAME) test/test.txt > $(TARGET)/o_test.txt
+	test "`diff test/o_test.txt build/o_test.txt`" = ""
 
 clean:
 	rm -rf $(TARGET)
