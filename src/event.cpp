@@ -11,18 +11,7 @@ Time::Time(uint8_t hours, uint8_t minutes) : hours_(hours), minutes_(minutes) {
   }
 }
 
-Time::Time(std::string time_str) : Time::Time(stoi(time.substr(0, 2)), stoi(time.substr(3, 5)));
-
-Event::Event(
-  std::string time,
-  int code,
-  std::string client_name
-) : event_code_((EventCode)code) {
-  this->time = Time(time);
-  // NOTE: VVV checked in EventManager
-  this->event_code_ = (EventCode)code;
-  this->content_ = client_name;
-}
+Time::Time(std::string time_str) : Time::Time(stoi(time_str.substr(0, 2)), stoi(time_str.substr(3, 5))) {}
 
 std::string Time::to_string() const {
   std::string ret = this->hours_ >= 10 ? "" : "0";
@@ -34,6 +23,16 @@ std::string Time::to_string() const {
   return ret;
 }
 
+Event::Event(
+  std::string time,
+  int code,
+  std::string client_name
+) : event_code_((EventCode)code), time_(time) {
+  // NOTE: VVV checked in EventManager
+  this->event_code_ = (EventCode)code;
+  this->content_ = client_name;
+}
+
 Event::Event(std::string time, int code, std::string client_name, int table) : Event::Event(time, code, client_name) {
   this->table_ = table;
 }
@@ -43,7 +42,7 @@ EventCode Event::event_code() const {
 }
 
 std::string Event::time() const {
-  return this->time_->to_string();
+  return this->time_.to_string();
 }
 
 const std::string& Event::msg() const {

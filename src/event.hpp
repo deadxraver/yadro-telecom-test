@@ -22,7 +22,7 @@ private:
 public:
   Time(uint8_t hours, uint8_t minutes);
   Time(std::string time_str);
-  to_string() const;
+  std::string to_string() const;
 };
 
 class Event {
