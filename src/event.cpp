@@ -2,14 +2,36 @@
 
 #include <iostream>
 
-Event::Event(std::string time, int code, std::string client_name) : event_code_((EventCode)code) {
-  this->time_.hours = stoi(time.substr(0, 2));
-  this->time_.minutes = stoi(time.substr(3, 5));
-  if (this->time_.hours >= 24 || this->time_.minutes >= 60) {
+Time::Time(uint8_t hours, uint8_t minutes) : hours_(hours), minutes_(minutes) {
+  if (hours < 0 || hours >= 24) {
     // TODO: throw exception
   }
-  this->event_code_ = (EventCode)code; // TODO: check
-  this->content_ = client_name; // TODO: check if no err
+  if (minutes < 0 || hours >= 60) {
+    // TODO: throw exception
+  }
+}
+
+Time::Time(std::string time_str) : Time::Time(stoi(time.substr(0, 2)), stoi(time.substr(3, 5)));
+
+Event::Event(
+  std::string time,
+  int code,
+  std::string client_name
+) : event_code_((EventCode)code) {
+  this->time = Time(time);
+  // NOTE: VVV checked in EventManager
+  this->event_code_ = (EventCode)code;
+  this->content_ = client_name;
+}
+
+std::string Time::to_string() const {
+  std::string ret = this->hours_ >= 10 ? "" : "0";
+  ret += std::to_string(this->hours_);
+  ret += ":";
+  if (this->minutes_ < 10)
+    ret += "0";
+  ret += std::to_string(this->minutes_);
+  return ret;
 }
 
 Event::Event(std::string time, int code, std::string client_name, int table) : Event::Event(time, code, client_name) {
@@ -21,13 +43,7 @@ EventCode Event::event_code() const {
 }
 
 std::string Event::time() const {
-  std::string ret = this->time_.hours >= 10 ? "" : "0";
-  ret += std::to_string(this->time_.hours);
-  ret += ":";
-  if (this->time_.minutes < 10)
-    ret += "0";
-  ret += std::to_string(this->time_.minutes);
-  return ret;
+  return this->time_->to_string();
 }
 
 const std::string& Event::msg() const {

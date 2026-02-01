@@ -15,9 +15,14 @@ enum EventCode {
   O_ERROR,
 };
 
-struct Time {
-  uint8_t hours;
-  uint8_t minutes;
+class Time {
+private:
+  uint8_t hours_;
+  uint8_t minutes_;
+public:
+  Time(uint8_t hours, uint8_t minutes);
+  Time(std::string time_str);
+  to_string() const;
 };
 
 class Event {
