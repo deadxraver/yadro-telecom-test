@@ -19,6 +19,16 @@ EventManager::EventManager(
   tables_(tables_count)
 {}
 
+bool EventManager::remove_from_queue(std::string client) {
+  for (size_t i = 0; i < this->clients_queue_.size(); ++i) {
+    if (this->clients_queue_[i] == client) {
+      clients_queue_.erase(this->clients_queue_.begin() + i);
+      return true;
+    }
+  }
+  return false;
+}
+
 Event EventManager::apply_event(const Event& event) {
   if (event.time().is_less(this->open_time_))
     return Event(event.time(), O_ERROR, "NotOpenYet");
@@ -34,14 +44,12 @@ Event EventManager::apply_event(const Event& event) {
         // TODO: count income
         this->tables_[i].is_taken = false;
         this->tables_[i].client_name = "";
-        goto ok;
+        goto took_place_ok;
       }
     }
-    if (this->clients_queue_.front() == event.client_name())
-      this->clients_queue_.pop();
-    else // BUG: returns NotInQueue when shouldn't
-      return Event(event.time(), O_ERROR, "NotInQueue");
-  ok:
+    if (this->remove_from_queue(event.client_name()))
+      goto took_place_ok;
+  took_place_ok:
     return Event(event.time(), O_CLIENT_TOOK_PLACE, event.client_name(), event.table_no());
   }
   else if (event.event_code() == I_CLIENT_WAITS) {
@@ -51,7 +59,7 @@ Event EventManager::apply_event(const Event& event) {
     }
     if (clients_queue_.size() >= this->tables_count_)
       return Event(event.time(), O_CLIENT_LEFT, event.client_name());
-    this->clients_queue_.push(event.client_name());
+    this->clients_queue_.push_back(event.client_name());
     return Event(event.time(), NO_EVENT, "");
   }
   else if (event.event_code() == I_CLIENT_LEFT) {
@@ -60,12 +68,15 @@ Event EventManager::apply_event(const Event& event) {
         // TODO: count income
         this->tables_[i].is_taken = false;
         this->tables_[i].client_name = "";
-        return Event(event.time(), O_CLIENT_LEFT, event.client_name());
+        goto left_ok;
       }
     }
-    // NOTE: should I check queue?
+    if (this->remove_from_queue(event.client_name()))
+      goto left_ok;
     // BUG: returns NoSuchClient when shouldn't
-    return Event(event.time(), O_ERROR, "NoSuchClient");
+    //return Event(event.time(), O_ERROR, "NoSuchClient");
+  left_ok:
+    return Event(event.time(), O_CLIENT_LEFT, event.client_name());
   }
   else
     return Event(event.time(), O_ERROR, "UnknownEventId");
@@ -73,7 +84,7 @@ Event EventManager::apply_event(const Event& event) {
 
 std::vector<std::string> EventManager::cleanup() {
   std::vector<std::string> ret;
-  for (; !this->clients_queue_.empty(); this->clients_queue_.pop()) {
+  for (; !this->clients_queue_.empty(); this->clients_queue_.erase(this->clients_queue_.begin())) {
     ret.push_back(this->clients_queue_.front());
   }
   for (size_t i = 0; i < this->tables_count_; ++i) {

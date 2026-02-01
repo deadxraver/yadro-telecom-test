@@ -17,12 +17,12 @@ struct Place {
 class EventManager {
 private:
   std::vector<Place> tables_;
-  std::vector<std::string> clients_in_;
-  std::queue<std::string> clients_queue_;
+  std::vector<std::string> clients_queue_;
   int tables_count_;
   Time open_time_;
   Time close_time_;
   int cost_;
+  bool remove_from_queue(std::string client);
 public:
   EventManager(
     int tables_count,
