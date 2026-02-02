@@ -12,5 +12,7 @@ to run tests, `$ make test`.
 
 ## Run
 
-`$ /path/to/app input_file.txt`
+With default configurations you can run example this way:
+
+`$ ./build/task ./test/test.txt`
 
